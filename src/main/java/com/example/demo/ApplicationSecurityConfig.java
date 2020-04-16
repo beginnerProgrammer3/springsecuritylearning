@@ -42,7 +42,7 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 //                .antMatchers(HttpMethod.POST, "/management/api/**").hasAnyAuthority(ApplicationUserPermission.GIRL_WRITE.getPermission())
 //                .antMatchers(HttpMethod.PUT, "/management/api/**").hasAnyAuthority(ApplicationUserPermission.GIRL_WRITE.getPermission())
 ////       podstawowa metoda autoryzacji         .antMatchers(HttpMethod.PUT, "/management/api/**").hasAnyAuthority(ApplicationUserPermission.GIRL_WRITE.name())
-//                .antMatchers("/management/api/**").hasAnyRole(GIRL.name(), ADMIN.name())
+                .antMatchers("/management/api/**").hasAnyRole(GIRL.name(), ADMIN.name())
 
 
                 .anyRequest()
