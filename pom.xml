@@ -67,7 +67,14 @@
             <version>0.11.1</version>
             <scope>runtime</scope>
         </dependency>
-<!-- this dependency is earlier -->
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <version>2.2.4.RELEASE</version>
+        </dependency>
+
+        <!-- this dependency is earlier -->
 <!--        <dependency>-->
 <!--            <groupId>org.bouncycastle</groupId>-->
 <!--            <artifactId>bcprov-jdk15on</artifactId>-->
@@ -104,6 +111,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>10</source>
+                    <target>10</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>

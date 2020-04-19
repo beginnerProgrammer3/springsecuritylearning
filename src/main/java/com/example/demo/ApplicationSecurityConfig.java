@@ -1,6 +1,9 @@
 package com.example.demo;
 
 import com.example.demo.auth.ApplicationUserService;
+import com.example.demo.jwt.JwtConfig;
+import com.example.demo.jwt.JwtTokenVerifier;
+import com.example.demo.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -9,7 +12,12 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import javax.crypto.SecretKey;
+
+import static com.example.demo.ApplicationUserRole.GIRL;
 
 @Configuration
 @EnableWebSecurity
@@ -18,10 +26,14 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
     private final ApplicationUserService applicationUserService;
+    private final JwtConfig jwtConfig;
+    private final SecretKey secretKey;
 
-            public ApplicationSecurityConfig(PasswordEncoder passwordEncoder, ApplicationUserService applicationUserService){
+            public ApplicationSecurityConfig(PasswordEncoder passwordEncoder, ApplicationUserService applicationUserService, JwtConfig jwtConfig, SecretKey secretKey){
                 this.passwordEncoder = passwordEncoder;
                 this.applicationUserService = applicationUserService;
+                this.jwtConfig = jwtConfig;
+                this.secretKey = secretKey;
             }
     //konfiguracja wyswietla popup z prosba o zalogowanie
 
@@ -31,74 +43,21 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
         http
 //                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))//disabling security
 
-                .csrf()
-                .disable()//disabling security
-                .authorizeRequests()
-                .antMatchers("/","/index","/css/*","/js/*","/h2-console/**")
-                .permitAll()
-
-//                .antMatchers("/user/**").hasRole(GIRL.name())
-//                .antMatchers(HttpMethod.DELETE, "/management/api/**").hasAnyAuthority(ApplicationUserPermission.GIRL_WRITE.getPermission())
-//                .antMatchers(HttpMethod.POST, "/management/api/**").hasAnyAuthority(ApplicationUserPermission.GIRL_WRITE.getPermission())
-//                .antMatchers(HttpMethod.PUT, "/management/api/**").hasAnyAuthority(ApplicationUserPermission.GIRL_WRITE.getPermission())
-////       podstawowa metoda autoryzacji         .antMatchers(HttpMethod.PUT, "/management/api/**").hasAnyAuthority(ApplicationUserPermission.GIRL_WRITE.name())
-                .antMatchers("/management/api/**").hasAnyRole(GIRL.name(), ADMIN.name())
-
-
-                .anyRequest()
-                .authenticated()
+                .csrf().disable()
+                .sessionManagement()
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                //.httpBasic(); //podstawowa autentykacja nie uzywajaca sessionID (prompt logowania sie)
+                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(jwtConfig, secretKey, authenticationManager()))
+                //druga metoda to add filter AFTER!!!!!!!
+                .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig), JwtUsernameAndPasswordAuthenticationFilter.class) //dodano token verifier z package jwt
+                .authorizeRequests()
+                .antMatchers("/", "/index", "/css/*", "/js/*", "/h2-console/**")
+                .permitAll()
+                .antMatchers("/api/**").hasRole(GIRL.name())
+                .anyRequest()
+                .authenticated();
 
-
-                .formLogin() //form autentication z session id(wylogowujaca sie po 10 minutach(okno logowania springboot do zapisu session id najlepiej uzyc postgres lub redis
-                        .loginPage("/login")
-                        .permitAll()
-                        .defaultSuccessUrl("/courses",true); //.permitAll(); //dodaje strone do logowania zamiast defaultowej springboot
-//                        .passwordParameter("somePasswordName")
-//                        .usernameParameter("some username")   niestandardowe nazwy wlasne usera i passworda
-
-
-//                .and().rememberMe(); // to zapamietuje usera na 2 tyg
-//                      .tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(21)).key("something secured"); //
-//                            .rememberMeParameter("some rememberName")  zmiana nazwy remember me
-
-
-
-//                .and().logout()
-//                      .logoutUrl("/logout"); //strona do wylogowania
-//                                    UWAGA!!!! to dajemy jesli mamy wylaczone csrf .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET")
-//                        .clearAuthentication(true)
-//                        .invalidateHttpSession(true) //usuwa cookies
-//                        .deleteCookies("JSESSIONID","remember-me");
-//                        .logoutSuccessUrl("/login");
-
-
-
-        http.headers().frameOptions().disable(); //wylacza zabezpieczenia i mozna wejsc do konsoli
     }
-
-//    @Override
-//    @Bean
-//    protected UserDetailsService userDetailsService() {
-//        UserDetails aneta= User.builder()
-//                .username("aneta")
-//                .password(passwordEncoder.encode("pass"))
-////                .roles(GIRL.name())
-//                .authorities(GIRL.getGrantedAuthorities())
-//                .build();
-//
-//        UserDetails jacek = User.builder()
-//                .username("jacek")
-//                .password(passwordEncoder.encode("pass"))
-////                .roles(ADMIN.name())
-//                .authorities(ADMIN.getGrantedAuthorities())
-//                .build();
-//
-//        return new InMemoryUserDetailsManager(aneta, jacek);
-//    }
-
-    // autentykacja podstawowa w spring security
 
 
     @Override

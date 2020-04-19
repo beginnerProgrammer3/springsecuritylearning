@@ -19,10 +19,12 @@ public class UserManagementController {
         this.userRepository = userRepository;
     }
 
-    private static final List<User> USERS= Arrays.asList(
-            new User(2,"Mateusz","Skorupa"),
-            new User(3,"Magdalena","Jurszewicz")
-    );
+
+//    test userList
+//    private static final List<User> USERS= Arrays.asList(
+//            new User(2,"Mateusz","Skorupa"),
+//            new User(3,"Magdalena","Jurszewicz")
+//    );
 
 
 
@@ -37,9 +39,12 @@ public class UserManagementController {
     @GetMapping(path = "{Id}")
     public User getUser(@PathVariable("Id") Integer id){
 
-        return USERS.stream().filter(user -> id.equals(user.getId()))
-                .findFirst()
-                .orElseThrow(()-> new IllegalStateException("User " + id + " does not exist"));
+        return userRepository.findAll().stream().filter(user -> id.equals(user.getId()))
+                .findFirst().orElseThrow(() -> new IllegalStateException("User " + id + " does not exist"));
+
+//        return USERS.stream().filter(user -> id.equals(user.getId()))
+//                .findFirst()
+//                .orElseThrow(()-> new IllegalStateException("User " + id + " does not exist"));
     }
 
     @PostMapping

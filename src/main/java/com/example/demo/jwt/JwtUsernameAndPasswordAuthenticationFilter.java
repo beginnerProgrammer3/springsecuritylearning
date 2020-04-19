@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import javax.crypto.SecretKey;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -19,10 +20,15 @@ import java.util.Date;
 
 public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
+    private final JwtConfig jwtConfig;
+    private final SecretKey SecretKey;
+
 
     private final AuthenticationManager authenticationManager;
 
-    public JwtUsernameAndPasswordAuthenticationFilter(AuthenticationManager authenticationManager) {
+    public JwtUsernameAndPasswordAuthenticationFilter(JwtConfig jwtConfig, javax.crypto.SecretKey secretKey, AuthenticationManager authenticationManager) {
+        this.jwtConfig = jwtConfig;
+        SecretKey = secretKey;
         this.authenticationManager = authenticationManager;
     }
 
@@ -60,17 +66,18 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
                                             FilterChain chain,
                                             Authentication authResult) throws IOException, ServletException {
 
-        String secureKey = "securesecuresecuresecuresecuresecuresecuresecuresecuresecure";
+//        String secureKey = "securesecuresecuresecuresecuresecuresecuresecuresecuresecure";
 
         String token = Jwts.builder()
                 .setSubject(authResult.getName())
                 .claim("authorities", authResult.getAuthorities())
                 .setIssuedAt(new Date())
                 .setExpiration(java.sql.Date.valueOf(LocalDate.now().plusWeeks(1)))
-                .signWith(Keys.hmacShaKeyFor(secureKey.getBytes()))
+//                .signWith(Keys.hmacShaKeyFor(secureKey.getBytes()))
+                .signWith(SecretKey)
                 .compact();
 
 //       sending token
-        response.addHeader("Authorization","Bearer" + token);
+        response.addHeader(jwtConfig.getAuthorizationHeader(),jwtConfig.getTokenPrefix() + token);
     }
 }
